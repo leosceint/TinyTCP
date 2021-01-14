@@ -27,6 +27,47 @@ void VideoClient::init_WSA()
     addr.sin_port = htons(m_port);
 }
 
+int VideoClient::recv_img(string* img, const string command, const string recv_key)
+{
+    // посылаем запрос
+    int send_result = send(connection, command.data(), command.size(), 0);
+    if(send_result == SOCKET_ERROR)
+        return -1;
+    // принимаем ключ
+    char* key = new char[recv_key.size()];
+    
+    int recv_len = recv(connection, key, recv_key.size(), 0);
+    if(recv_len > 0) 
+    {
+        if(strncmp(key, recv_key.data(), recv_key.size()) == 0)
+        {
+            // принимаем размер
+            char* c_image_size = new char[];
+            recv_len = recv(connection, c_image_size, ? , 0);
+            if(recv_len > 0)
+            {
+                int image_size = atoi(c_image_size);
+                // принимаем данные
+                char* image_buffer = new char[image_size];
+                recv_len = recv(connection, image_buffer, image_size, 0);
+                if(recv_len > 0)
+                {
+                    img = new string(image_buffer, image_size);
+                    return recv_len;
+                }
+                else
+                    return -1;
+            }
+            else
+                return -1;
+            
+
+        }
+    }
+    else 
+        return -1;
+}
+
 void VideoClient::start()
 {
     cout << endl << "Start" << endl;
@@ -68,8 +109,8 @@ void VideoClient::start()
             if(recv_len > 0)
             {
                 cout << "<WE GET DATA>" << endl;
-                int data_len = strlen(buffer);
-                string* img = new string(buffer, data_len);
+                //int data_len = strlen(buffer);
+                string* img = new string(buffer, recv_len);
                 m_images.push_back(img);
                 cout << *img << endl;
                 cout << "============" << endl;

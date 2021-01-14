@@ -35,6 +35,7 @@ public:
 
 private:
     void init_WSA();
+    int send_image(const string& image, const string recv_command = "SENDIMG", const string key = "IMG");
 };
 
 #endif

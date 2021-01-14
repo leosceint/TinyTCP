@@ -1,6 +1,7 @@
 #include "VideoServer.hpp"
 
 #include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -24,6 +25,42 @@ void VideoServer::init_WSA()
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr("0.0.0.0");
     addr.sin_port = htons(m_port);
+}
+
+int VideoServer::send_image(const string& image, const string recv_command, const string key)
+{
+    char* command = new char[recv_command.size()];
+    int send_result = 1;
+
+    // принимаем команду
+    int recv_len = recv(m_connection_socket, command, recv_command.size(), 0); 
+    
+    if(recv_len > 0)
+    {
+        if(strncmp(command, recv_command.data(), recv_command.size()) == 0)
+        {
+            cout << "<WE GET COMMAND -- " << recv_command << " > " << endl;
+            
+            // посылаем ключ
+            send_result = send(m_connection_socket, key.data(), key.size(), 0);
+            if(send_result == SOCKET_ERROR)
+                return -1;
+            
+            // посылаем размер данных
+            string s_image_size = to_string(image.size());
+            send_result = send(m_connection_socket, s_image_size.data(), s_image_size.size(), 0);
+            if(send_result == SOCKET_ERROR)
+                return -1;
+
+            // посылаем данные
+            send_result = send(m_connection_socket, image.data(), image.size(), 0);
+            if(send_result == SOCKET_ERROR)
+                return -1;
+            else 
+                return send_result;
+        }
+    }
+    return -1;
 }
 
 void VideoServer::start()
@@ -72,7 +109,7 @@ void VideoServer::start()
         while(send_result != SOCKET_ERROR)
         {
             string buffer = "hello world !!!";
-            send_result = send(m_connection_socket, buffer.data(), buffer.size(), 0);
+            send_result = send_image(buffer); //send(m_connection_socket, buffer.data(), buffer.size(), 0);
             cout << "Data send" << endl;
         }
 
