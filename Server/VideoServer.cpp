@@ -1,6 +1,7 @@
 #include "VideoServer.hpp"
 
 #include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -71,8 +72,9 @@ void VideoServer::start()
         int send_result = 1;
         while(send_result != SOCKET_ERROR)
         {
-            string buffer = "hello world !!!";
-            send_result = send(m_connection_socket, buffer.data(), buffer.size(), 0);
+            // string buffer = "hello world !!!";
+            int number = 134;
+            send_result = send(m_connection_socket, reinterpret_cast<char*>(&number), sizeof(number), 0);
             cout << "Data send" << endl;
         }
 

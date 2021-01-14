@@ -58,20 +58,22 @@ void VideoClient::start()
         }
 
         // получаем данные из сокета
-        char* buffer = new char[m_buffer_size];
+        // char* buffer = new char[m_buffer_size];
         while(connection_result == 0)
         {
             cout << endl << "Waiting for data" << endl;
             int recv_len;
-            recv_len = recv(connection, buffer, m_buffer_size, 0);
+            int recv_number;
+            recv_len = recv(connection, reinterpret_cast<char*>(&recv_number), sizeof(recv_number), 0);
             
             if(recv_len > 0)
             {
                 cout << "<WE GET DATA>" << endl;
-                int data_len = strlen(buffer);
-                string* img = new string(buffer, data_len);
-                m_images.push_back(img);
-                cout << *img << endl;
+                //int data_len = strlen(buffer);
+                //string* img = new string(buffer, recv_len);
+                //m_images.push_back(img);
+                //cout << *img << endl;
+                cout << recv_number << endl;
                 cout << "============" << endl;
             }
             else
@@ -80,7 +82,7 @@ void VideoClient::start()
                 connection_result = -1;
             }
         }
-        delete[] buffer;
+        //delete[] buffer;
 
         closesocket(connection);
         WSACleanup();
