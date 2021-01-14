@@ -1,7 +1,6 @@
 #include "VideoServer.hpp"
 
 #include <iostream>
-#include <string>
 
 using namespace std;
 
@@ -45,19 +44,25 @@ int VideoServer::send_image(const string& image, const string recv_command, cons
             send_result = send(m_connection_socket, key.data(), key.size(), 0);
             if(send_result == SOCKET_ERROR)
                 return -1;
-            
+            cout << "<WE SEND KEY -- " << key << " > " << endl;
+
+            int image_size = image.size();
             // посылаем размер данных
-            string s_image_size = to_string(image.size());
-            send_result = send(m_connection_socket, s_image_size.data(), s_image_size.size(), 0);
+            send_result = send(m_connection_socket, reinterpret_cast<char*>(&image_size), sizeof(image_size), 0);
             if(send_result == SOCKET_ERROR)
                 return -1;
+            cout << "<WE SEND SIZE OF DATA -- " << image_size << " > " << endl; 
 
             // посылаем данные
             send_result = send(m_connection_socket, image.data(), image.size(), 0);
+            
             if(send_result == SOCKET_ERROR)
                 return -1;
-            else 
+            else
+            {
+                cout << "<WE SEND DATA>" << endl;
                 return send_result;
+            }
         }
     }
     return -1;
@@ -109,8 +114,7 @@ void VideoServer::start()
         while(send_result != SOCKET_ERROR)
         {
             string buffer = "hello world !!!";
-            send_result = send_image(buffer); //send(m_connection_socket, buffer.data(), buffer.size(), 0);
-            cout << "Data send" << endl;
+            send_result = send_image(buffer);
         }
 
         closesocket(m_listen_socket);

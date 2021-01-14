@@ -27,32 +27,36 @@ void VideoClient::init_WSA()
     addr.sin_port = htons(m_port);
 }
 
-int VideoClient::recv_img(string* img, const string command, const string recv_key)
+int VideoClient::recv_img(string& img, const string command, const string recv_key)
 {
     // посылаем запрос
     int send_result = send(connection, command.data(), command.size(), 0);
     if(send_result == SOCKET_ERROR)
         return -1;
+    cout << "<WE SEND COMMAND -- " << command << " > " << endl;
+
     // принимаем ключ
     char* key = new char[recv_key.size()];
-    
     int recv_len = recv(connection, key, recv_key.size(), 0);
+    
     if(recv_len > 0) 
     {
         if(strncmp(key, recv_key.data(), recv_key.size()) == 0)
         {
+            cout << "<WE GET KEY -- " << recv_key << " > " << endl;
             // принимаем размер
-            char* c_image_size = new char[];
-            recv_len = recv(connection, c_image_size, ? , 0);
+            int image_size;
+            recv_len = recv(connection, reinterpret_cast<char*>(&image_size), sizeof(image_size), 0);
             if(recv_len > 0)
             {
-                int image_size = atoi(c_image_size);
+                cout << "<WE GET SIZE OF DATA -- " << image_size << " > " << endl; 
                 // принимаем данные
                 char* image_buffer = new char[image_size];
                 recv_len = recv(connection, image_buffer, image_size, 0);
                 if(recv_len > 0)
                 {
-                    img = new string(image_buffer, image_size);
+                    cout << "<WE GET DATA>" << endl;
+                    img = string(image_buffer, image_size);
                     return recv_len;
                 }
                 else
@@ -60,12 +64,9 @@ int VideoClient::recv_img(string* img, const string command, const string recv_k
             }
             else
                 return -1;
-            
-
         }
     }
-    else 
-        return -1;
+    return -1;
 }
 
 void VideoClient::start()
@@ -99,21 +100,17 @@ void VideoClient::start()
         }
 
         // получаем данные из сокета
-        char* buffer = new char[m_buffer_size];
         while(connection_result == 0)
         {
             cout << endl << "Waiting for data" << endl;
             int recv_len;
-            recv_len = recv(connection, buffer, m_buffer_size, 0);
+            string img;
+            recv_len = recv_img(img);
             
             if(recv_len > 0)
             {
-                cout << "<WE GET DATA>" << endl;
-                //int data_len = strlen(buffer);
-                string* img = new string(buffer, recv_len);
-                m_images.push_back(img);
-                cout << *img << endl;
-                cout << "============" << endl;
+                m_images.push_back(&img);
+                cout << img << endl;
             }
             else
             {
@@ -121,7 +118,6 @@ void VideoClient::start()
                 connection_result = -1;
             }
         }
-        delete[] buffer;
 
         closesocket(connection);
         WSACleanup();
