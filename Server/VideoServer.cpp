@@ -131,3 +131,8 @@ void VideoServer::stop()
         bRun = false;
 
 }
+
+void VideoServer::push_image(string* image)
+{
+    m_images.push_back(image);
+}

@@ -31,7 +31,7 @@ public:
     void start();
     void stop();
 
-    // void push_image(string* image);
+    void push_image(string* image);
 
 private:
     void init_WSA();
