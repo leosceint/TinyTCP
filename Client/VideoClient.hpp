@@ -3,7 +3,7 @@
 
 #include <thread>
 #include <mutex>
-#include <vector>
+#include <queue>
 #include <string>
 #include <WinSock2.h>
 
@@ -22,7 +22,7 @@ private:
     thread* m_recv_thread;
     mutex m_mutex;
 
-    vector<string*> m_images;
+    queue<string*> m_images;
 
     bool bRun;
 
@@ -36,7 +36,7 @@ public:
 
     void start();
     void stop();
-    // string pop_image();
+    string pop_image();
 
 protected:
     void connection_thread_worker();

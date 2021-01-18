@@ -121,9 +121,6 @@ void VideoServer::connection_thread_worker()
         }
 
         sending_thread_worker();
-        //m_sending_thread = new thread(&VideoServer::sending_thread_worker, this);
-        //m_sending_thread->join();
-        //delete m_sending_thread;
 
         closesocket(m_listen_socket);
         WSACleanup();
@@ -150,7 +147,7 @@ void VideoServer::start()
     cout << endl << "Start" << endl;
 
     m_connection_thread = new thread(&VideoServer::connection_thread_worker, this);
-    m_connection_thread-> detach();//join();
+    m_connection_thread-> detach();
 }
 
 void VideoServer::stop()

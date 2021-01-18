@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "iostream": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "queue": "cpp",
+        "ostream": "cpp",
+        "thread": "cpp",
+        "mutex": "cpp"
     }
 }

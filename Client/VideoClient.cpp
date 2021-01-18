@@ -100,18 +100,19 @@ void VideoClient::connection_thread_worker()
         }
 
         // получаем данные из сокета
+        string img;
+
         while(connection_result == 0)
         {
             cout << endl << "Waiting for data" << endl;
             int recv_len;
-            string img;
+            
             recv_len = recv_img(img);
             
             if(recv_len > 0)
             {
                 m_mutex.lock();
-                m_images.push_back(&img);
-                cout << img << endl;
+                m_images.push(&img);
                 m_mutex.unlock();
             }
             else
@@ -132,12 +133,27 @@ void VideoClient::recv_thread_worker()
 
 }
 
+string VideoClient::pop_image()
+{
+    string output;
+
+    if(!m_images.empty())
+    {
+        m_mutex.lock();
+        output = *(m_images.front());
+        m_images.pop();
+        m_mutex.unlock();
+    }
+
+    return output;
+}
+
 void VideoClient::start()
 {
     cout << endl << "Start" << endl;
 
     m_connection_thread = new thread(&VideoClient::connection_thread_worker, this);
-    m_connection_thread->detach();//join();
+    m_connection_thread->detach();
 
 }
 
