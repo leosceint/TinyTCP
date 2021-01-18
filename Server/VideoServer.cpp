@@ -6,14 +6,16 @@ using namespace std;
 
 VideoServer::VideoServer(int port):
     m_port(port),
-    bRun(true)
+    bRun(true),
+    m_connection_thread(0),
+    m_sending_thread(0)
 {
 
 }
 
 VideoServer::~VideoServer()
 {
-    stop();
+   stop();
 }
 
 void VideoServer::init_WSA()
@@ -68,10 +70,8 @@ int VideoServer::send_image(const string& image, const string recv_command, cons
     return -1;
 }
 
-void VideoServer::start()
-{
-    cout << endl << "Start" << endl;
-    
+void VideoServer::connection_thread_worker()
+{   
     while(bRun)
     {
         init_WSA();
@@ -80,19 +80,25 @@ void VideoServer::start()
 
         if(bind(m_listen_socket, reinterpret_cast<sockaddr*>(&addr), sinlen) == SOCKET_ERROR)
         {
+            m_mutex.lock();
             perror("Listen Socket bind failed: ");
             WSACleanup();
+            m_mutex.unlock();
             continue;
         }
 
         if(listen(m_listen_socket, SOMAXCONN) != SOCKET_ERROR)
         {
+            m_mutex.lock();
             cout << "Start listening at port: " << ntohs(addr.sin_port) << endl;
+            m_mutex.unlock();
         }
         else
         {
+            m_mutex.lock();
             perror("Start listening failed: ");
             WSACleanup();
+            m_mutex.unlock();
             continue;
         }
 
@@ -101,26 +107,50 @@ void VideoServer::start()
 
         if((m_connection_socket = accept(m_listen_socket, reinterpret_cast<sockaddr*>(&addr_accept), &sinlen_accept)) < 0)
         {
+            m_mutex.lock();
             perror("Error accept connection: ");
             WSACleanup();
+            m_mutex.unlock();
             continue;
         }
         else
         {
+            m_mutex.lock();
             cout << "Connected!" << endl;
+            m_mutex.unlock();
         }
 
-        int send_result = 1;
-        while(send_result != SOCKET_ERROR)
-        {
-            string buffer = "hello world !!!";
-            send_result = send_image(buffer);
-        }
+        sending_thread_worker();
+        //m_sending_thread = new thread(&VideoServer::sending_thread_worker, this);
+        //m_sending_thread->join();
+        //delete m_sending_thread;
 
         closesocket(m_listen_socket);
         WSACleanup();
-
     }
+}
+
+void VideoServer::sending_thread_worker()
+{
+    // пересылка данных
+    int send_result = 1;
+    while(send_result != SOCKET_ERROR)
+    {
+        if(!m_images.empty())
+        {
+            string buffer = *(m_images.front());
+            m_images.pop();
+            send_result = send_image(buffer);
+        }
+    }
+}
+
+void VideoServer::start()
+{
+    cout << endl << "Start" << endl;
+
+    m_connection_thread = new thread(&VideoServer::connection_thread_worker, this);
+    m_connection_thread-> detach();//join();
 }
 
 void VideoServer::stop()
@@ -134,5 +164,7 @@ void VideoServer::stop()
 
 void VideoServer::push_image(string* image)
 {
-    m_images.push_back(image);
+    m_mutex.lock();
+    m_images.push(image);
+    m_mutex.unlock();
 }

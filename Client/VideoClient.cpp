@@ -8,7 +8,9 @@ VideoClient::VideoClient(string hostname, int port):
     m_hostname(hostname),
     m_port(port),
     bRun(true),
-    m_buffer_size(512)
+    m_buffer_size(512),
+    m_connection_thread(0),
+    m_recv_thread(0)
 {
 
 }
@@ -69,10 +71,8 @@ int VideoClient::recv_img(string& img, const string command, const string recv_k
     return -1;
 }
 
-void VideoClient::start()
+void VideoClient::connection_thread_worker()
 {
-    cout << endl << "Start" << endl;
-
     while(bRun)
     {
         init_WSA();
@@ -109,8 +109,10 @@ void VideoClient::start()
             
             if(recv_len > 0)
             {
+                m_mutex.lock();
                 m_images.push_back(&img);
                 cout << img << endl;
+                m_mutex.unlock();
             }
             else
             {
@@ -123,6 +125,20 @@ void VideoClient::start()
         WSACleanup();
 
     }
+}
+
+void VideoClient::recv_thread_worker()
+{
+
+}
+
+void VideoClient::start()
+{
+    cout << endl << "Start" << endl;
+
+    m_connection_thread = new thread(&VideoClient::connection_thread_worker, this);
+    m_connection_thread->detach();//join();
+
 }
 
 void VideoClient::stop()

@@ -1,8 +1,10 @@
 #ifndef VIDEO_SERVER_HPP
 #define VIDEO_SERVER_HPP
 
-#include <vector>
+#include <queue>
 #include <string>
+#include <thread>
+#include <mutex>
 #include <WinSock2.h>
 
 #pragma comment (lib, "Ws2_32.lib")
@@ -18,7 +20,11 @@ private:
     SOCKET m_listen_socket;
     SOCKET m_connection_socket;
 
-    vector<string*> m_images;
+    mutex m_mutex;
+    thread* m_connection_thread;
+    thread* m_sending_thread;
+
+    queue<string*> m_images;
 
     SOCKADDR_IN addr;
 
@@ -32,6 +38,10 @@ public:
     void stop();
 
     void push_image(string* image);
+
+protected:
+    void connection_thread_worker();
+    void sending_thread_worker();
 
 private:
     void init_WSA();

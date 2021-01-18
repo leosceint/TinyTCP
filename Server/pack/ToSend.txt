@@ -1,0 +1,5 @@
+Hello world!
+Hello threads!
+Hello for all!
+I am happy!
+etc

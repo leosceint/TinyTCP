@@ -8,6 +8,9 @@ int main()
 {
     VideoClient client;
     client.start();
-
+    while(true)
+    {
+        
+    }
     return 0;
 }
