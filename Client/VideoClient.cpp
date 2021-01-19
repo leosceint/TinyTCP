@@ -29,15 +29,16 @@ void VideoClient::init_WSA()
     addr.sin_port = htons(m_port);
 }
 
+// Для получения одной картинки по протоколу (Описание протокола см. в Readme)
 int VideoClient::recv_img(string& img, const string command, const string recv_key)
 {
-    // посылаем запрос
+    // посылаем запрос серверу (SENDIMG по умолчанию)
     int send_result = send(connection, command.data(), command.size(), 0);
     if(send_result == SOCKET_ERROR)
         return -1;
     cout << "<WE SEND COMMAND -- " << command << " > " << endl;
 
-    // принимаем ключ
+    // принимаем ключ от сервера (IMG по умолчанию)
     char* key = new char[recv_key.size()];
     int recv_len = recv(connection, key, recv_key.size(), 0);
     
@@ -46,13 +47,13 @@ int VideoClient::recv_img(string& img, const string command, const string recv_k
         if(strncmp(key, recv_key.data(), recv_key.size()) == 0)
         {
             cout << "<WE GET KEY -- " << recv_key << " > " << endl;
-            // принимаем размер
+            // принимаем размер данных от сервера (в формате 4-байтовый int)
             int image_size;
             recv_len = recv(connection, reinterpret_cast<char*>(&image_size), sizeof(image_size), 0);
             if(recv_len > 0)
             {
                 cout << "<WE GET SIZE OF DATA -- " << image_size << " > " << endl; 
-                // принимаем данные
+                // принимаем данные от сервера в соответствии с размером
                 char* image_buffer = new char[image_size];
                 recv_len = recv(connection, image_buffer, image_size, 0);
                 if(recv_len > 0)
@@ -71,6 +72,7 @@ int VideoClient::recv_img(string& img, const string command, const string recv_k
     return -1;
 }
 
+// Worker потока для общего сетевого взаимодействия
 void VideoClient::connection_thread_worker()
 {
     while(bRun)
@@ -128,11 +130,7 @@ void VideoClient::connection_thread_worker()
     }
 }
 
-void VideoClient::recv_thread_worker()
-{
-
-}
-
+// Для извлечения данных из внутренней очереди сервера
 string VideoClient::pop_image()
 {
     string output;
@@ -148,6 +146,7 @@ string VideoClient::pop_image()
     return output;
 }
 
+// Для запуска клиента
 void VideoClient::start()
 {
     cout << endl << "Start" << endl;
@@ -157,6 +156,7 @@ void VideoClient::start()
 
 }
 
+// Для остановки клиента. Явно вызывать не требуется
 void VideoClient::stop()
 {
     cout << endl << "Stop" << endl;

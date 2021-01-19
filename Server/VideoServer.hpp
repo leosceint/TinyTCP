@@ -34,17 +34,26 @@ public:
     VideoServer(int port = 9999);
     ~VideoServer();
 
+    // Для запуска сервера
     void start();
+
+    // Для останова сервера. Явно вызывать не требуется
     void stop();
 
+    // Для передачи данных во внутреннюю очередь сервера
     void push_image(string* image);
 
 protected:
+    // Worker потока для общего сетевого взаимодействия
     void connection_thread_worker();
+    
+    // Worker для общей отправки
     void sending_thread_worker();
 
 private:
     void init_WSA();
+
+    // Для передачи одной картинки по протоколу (Описание протокола см. в Readme)
     int send_image(const string& image, const string recv_command = "SENDIMG", const string key = "IMG");
 };
 

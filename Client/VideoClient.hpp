@@ -34,16 +34,23 @@ public:
     VideoClient(string hostname = "127.0.0.1", int port=9999);
     ~VideoClient();
 
+    // Для запуска клиента
     void start();
+
+    // Для остановки клиента. Явно вызывать не требуется
     void stop();
+
+    // Для извлечения данных из внутренней очереди сервера
     string pop_image();
 
 protected:
+    // Worker потока для общего сетевого взаимодействия
     void connection_thread_worker();
-    void recv_thread_worker();
 
 private:
     void init_WSA();
+    
+    // Для получения одной картинки по протоколу (Описание протокола см. в Readme)
     int recv_img(string& img, const string command = "SENDIMG", const string recv_key = "IMG");
 };
 

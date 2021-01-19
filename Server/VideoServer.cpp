@@ -28,12 +28,13 @@ void VideoServer::init_WSA()
     addr.sin_port = htons(m_port);
 }
 
+// Для передачи одной картинки по протоколу (Описание протокола см. в Readme)
 int VideoServer::send_image(const string& image, const string recv_command, const string key)
 {
     char* command = new char[recv_command.size()];
     int send_result = 1;
 
-    // принимаем команду
+    // принимаем команду от клиента (SENDIMG по умолчанию)
     int recv_len = recv(m_connection_socket, command, recv_command.size(), 0); 
     
     if(recv_len > 0)
@@ -42,20 +43,20 @@ int VideoServer::send_image(const string& image, const string recv_command, cons
         {
             cout << "<WE GET COMMAND -- " << recv_command << " > " << endl;
             
-            // посылаем ключ
+            // посылаем ключ клиенту (IMG по умолчанию)
             send_result = send(m_connection_socket, key.data(), key.size(), 0);
             if(send_result == SOCKET_ERROR)
                 return -1;
             cout << "<WE SEND KEY -- " << key << " > " << endl;
 
             int image_size = image.size();
-            // посылаем размер данных
+            // посылаем размер данных клиенту (в формате 4-байтовый int)
             send_result = send(m_connection_socket, reinterpret_cast<char*>(&image_size), sizeof(image_size), 0);
             if(send_result == SOCKET_ERROR)
                 return -1;
             cout << "<WE SEND SIZE OF DATA -- " << image_size << " > " << endl; 
 
-            // посылаем данные
+            // посылаем данные клиенту в соответствии с размером
             send_result = send(m_connection_socket, image.data(), image.size(), 0);
             
             if(send_result == SOCKET_ERROR)
@@ -70,6 +71,7 @@ int VideoServer::send_image(const string& image, const string recv_command, cons
     return -1;
 }
 
+// Worker потока для общего сетевого взаимодействия
 void VideoServer::connection_thread_worker()
 {   
     while(bRun)
@@ -127,6 +129,7 @@ void VideoServer::connection_thread_worker()
     }
 }
 
+// Worker для общей отправки
 void VideoServer::sending_thread_worker()
 {
     // пересылка данных
@@ -142,6 +145,7 @@ void VideoServer::sending_thread_worker()
     }
 }
 
+// Для запуска сервера
 void VideoServer::start()
 {
     cout << endl << "Start" << endl;
@@ -150,6 +154,7 @@ void VideoServer::start()
     m_connection_thread-> detach();
 }
 
+// Для останова сервера. Явно вызывать не требуется
 void VideoServer::stop()
 {
     cout << endl << "Stop" << endl;
@@ -159,6 +164,7 @@ void VideoServer::stop()
 
 }
 
+// Для передачи данных во внутреннюю очередь сервера
 void VideoServer::push_image(string* image)
 {
     m_mutex.lock();
