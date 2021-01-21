@@ -31,7 +31,7 @@ private:
     SOCKADDR_IN addr;
 
 public:
-    VideoClient(string hostname = "127.0.0.1", int port=9999);
+    VideoClient(string hostname = "127.0.0.1", int port=9999, int buffer_size=512);
     ~VideoClient();
 
     // Для запуска клиента

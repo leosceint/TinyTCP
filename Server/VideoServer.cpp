@@ -4,11 +4,12 @@
 
 using namespace std;
 
-VideoServer::VideoServer(int port):
+VideoServer::VideoServer(int port, int package_size):
     m_port(port),
     bRun(true),
     m_connection_thread(0),
-    m_sending_thread(0)
+    m_sending_thread(0),
+    m_package_size(package_size)
 {
 
 }
@@ -57,15 +58,23 @@ int VideoServer::send_image(const string& image, const string recv_command, cons
             cout << "<WE SEND SIZE OF DATA -- " << image_size << " > " << endl; 
 
             // посылаем данные клиенту в соответствии с размером
-            send_result = send(m_connection_socket, image.data(), image.size(), 0);
-            
-            if(send_result == SOCKET_ERROR)
-                return -1;
-            else
+            int package_size = m_package_size;
+            const char* image_buffer = image.data();
+            send_result = 0;
+
+            while (image_size > 0)
             {
-                cout << "<WE SEND DATA>" << endl;
-                return send_result;
+                if (image_size < package_size)
+                    package_size = image_size;
+
+                send_result += send(m_connection_socket, image_buffer, package_size, 0);
+                image_buffer += package_size;
+                image_size -= package_size;
             }
+
+            cout << "WE SEND DATA" << endl;
+
+            return send_result;
         }
     }
     return -1;
@@ -134,15 +143,20 @@ void VideoServer::sending_thread_worker()
 {
     // пересылка данных
     int send_result = 1;
-    while(send_result != SOCKET_ERROR)
+    while(send_result != SOCKET_ERROR && bRun)
     {
         if(!m_images.empty())
         {
+            m_mutex.lock();
             string buffer = *(m_images.front());
             m_images.pop();
             send_result = send_image(buffer);
+            m_mutex.unlock();
         }
     }
+
+    queue<string*> empty;
+    m_images.swap(empty);
 }
 
 // Для запуска сервера

@@ -30,8 +30,10 @@ private:
 
     bool bRun;
 
+    int m_package_size;
+
 public:
-    VideoServer(int port = 9999);
+    VideoServer(int port = 9999, int package_size = 512);
     ~VideoServer();
 
     // Для запуска сервера

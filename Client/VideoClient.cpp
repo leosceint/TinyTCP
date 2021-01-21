@@ -4,13 +4,13 @@
 
 using namespace std;
 
-VideoClient::VideoClient(string hostname, int port):
+VideoClient::VideoClient(string hostname, int port, int buffer_size):
     m_hostname(hostname),
     m_port(port),
     bRun(true),
-    m_buffer_size(512),
     m_connection_thread(0),
-    m_recv_thread(0)
+    m_recv_thread(0),
+    m_buffer_size(buffer_size)
 {
 
 }
@@ -54,16 +54,23 @@ int VideoClient::recv_img(string& img, const string command, const string recv_k
             {
                 cout << "<WE GET SIZE OF DATA -- " << image_size << " > " << endl; 
                 // принимаем данные от сервера в соответствии с размером
-                char* image_buffer = new char[image_size];
-                recv_len = recv(connection, image_buffer, image_size, 0);
-                if(recv_len > 0)
+                int package_size = m_buffer_size;
+                int recv_len = 0;
+                img.clear();
+                while (image_size > 0)
                 {
-                    cout << "<WE GET DATA>" << endl;
-                    img = string(image_buffer, image_size);
-                    return recv_len;
+                    if (image_size < package_size)
+                        package_size = image_size;
+                    char* image_buffer = new char[package_size];
+
+                    recv_len += recv(connection, image_buffer, package_size, 0);
+                    img.append(image_buffer, package_size);
+                    image_size -= package_size;
                 }
-                else
-                    return -1;
+                m_mutex.lock();
+                cout << "<WE GET DATA>" << endl;
+                m_mutex.unlock();
+                return recv_len;
             }
             else
                 return -1;
